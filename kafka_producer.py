@@ -4,7 +4,7 @@ import json
 import time
 
 # Load the CSV data
-file_path = '/mnt/data/twitter_dataset.csv'
+file_path = 'twitter_dataset.csv'
 twitter_data = pd.read_csv(file_path)
 
 # Kafka setup using kafka-python
