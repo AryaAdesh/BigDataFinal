@@ -35,25 +35,3 @@ class BlueskyClient:
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         return response.json().get("posts", [])
-
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-username = config['CREDENTIALS']['username']
-password = config['CREDENTIALS']['password']
-
-client = BlueskyClient(username, password)
-try:
-    client.authenticate()
-    posts = client.search_posts(limit=100)
-    print("Posts:")
-    import json
-    for post in posts:
-        try:
-            print(json.dumps(post, indent=2))
-        except (TypeError, ValueError) as e:
-            print(f"Error serializing post to JSON: {e}{post}")
-
-except Exception as e:
-    print(f"An error occurred: {e}")

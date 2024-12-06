@@ -1,21 +1,43 @@
-from kafka import KafkaConsumer
-from pymongo import MongoClient
 import json
+from kafka import KafkaConsumer
+import configparser
+import pymongo
 
-# Kafka setup
-consumer = KafkaConsumer(
-    'twitter_data_topic',
-    bootstrap_servers='localhost:9092',  # Adjust this if needed
-    auto_offset_reset='earliest',
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+# Kafka Consumer Setup
+class KafkaConsumerClient:
+    def __init__(self, config_path='config.ini'):
+        # Read Kafka configuration from config file
+        self.config = configparser.ConfigParser()
+        self.config.read(config_path)
 
-# MongoDB setup
-mongo_client = MongoClient("mongodb://localhost:27017/")
-mongo_db = mongo_client["twitter_db"]
-mongo_collection = mongo_db["tweets"]
+        self.consumer = KafkaConsumer(
+            self.config['KAFKA']['topic'],
+            bootstrap_servers=self.config['KAFKA']['bootstrap_servers'],
+            auto_offset_reset='earliest',
+            enable_auto_commit=True,
+            group_id='twitter_data_consumer_group',
+            value_deserializer=lambda v: json.loads(v.decode('utf-8'))
+        )
 
-# Consume messages from Kafka and store in MongoDB
-for message in consumer:
-    mongo_collection.insert_one(message.value)
-    print(f"Inserted into MongoDB: {message.value}")
+        # MongoDB Setup
+        self.mongo_client = pymongo.MongoClient(self.config['MONGODB']['uri'])
+        self.db = self.mongo_client[self.config['MONGODB']['database']]
+        self.collection = self.db[self.config['MONGODB']['collection']]
+
+    def consume_posts(self):
+        print(f"Consuming messages from topic: {self.config['KAFKA']['topic']}")
+        # Removed unnecessary poll method as it is not required for consuming messages
+        try:
+            print(f"Listening for messages...")
+            for message in self.consumer:
+                post_data = message.value
+                # Insert received post data into MongoDB
+                self.collection.insert_one(post_data)
+                print(f"Inserted post into MongoDB with CID: {post_data.get('cid')}")
+        except Exception as e:
+            print(f"An error occurred while consuming messages: {e}")
+
+# Example Usage
+if __name__ == "__main__":
+    consumer_client = KafkaConsumerClient()
+    consumer_client.consume_posts()
