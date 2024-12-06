@@ -4,11 +4,12 @@ import configparser
 
 
 class BlueskyClient:
-    def __init__(self, username, password):
+    def __init__(self, username, password, term):
         self.base_url = "https://bsky.social/xrpc/"
         self.username = username
         self.password = password
         self.session_token = None
+        self.term = term
 
     def authenticate(self):
         url = f"{self.base_url}com.atproto.server.createSession"
@@ -20,7 +21,7 @@ class BlueskyClient:
         response.raise_for_status()
         self.session_token = response.json().get("accessJwt")
 
-    def search_posts(self, term="the", limit=100):
+    def search_posts(self, limit=100):
         if not self.session_token:
             raise ValueError("Client is not authenticated. Please call authenticate() first.")
 
@@ -29,7 +30,7 @@ class BlueskyClient:
             "Authorization": f"Bearer {self.session_token}"
         }
         params = {
-            "q": term,
+            "q": self.term,
             "limit": limit
         }
         response = requests.get(url, headers=headers, params=params)

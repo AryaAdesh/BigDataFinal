@@ -3,7 +3,7 @@ from kafka import KafkaConsumer
 import configparser
 import pymongo
 
-# Kafka Consumer Setup
+
 class KafkaConsumerClient:
     def __init__(self, config_path='config.ini'):
         # Read Kafka configuration from config file
@@ -37,7 +37,7 @@ class KafkaConsumerClient:
         except Exception as e:
             print(f"An error occurred while consuming messages: {e}")
 
-# Example Usage
+
 if __name__ == "__main__":
     consumer_client = KafkaConsumerClient()
     consumer_client.consume_posts()
