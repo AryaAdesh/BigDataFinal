@@ -1,7 +1,7 @@
 import json
 from kafka import KafkaConsumer
 import configparser
-import pymongo
+from mongo_client import MongoDBClient
 
 
 class KafkaConsumerClient:
@@ -19,10 +19,8 @@ class KafkaConsumerClient:
             value_deserializer=lambda v: json.loads(v.decode('utf-8'))
         )
 
-        # MongoDB Setup
-        self.mongo_client = pymongo.MongoClient(self.config['MONGODB']['uri'])
-        self.db = self.mongo_client[self.config['MONGODB']['database']]
-        self.collection = self.db[self.config['MONGODB']['collection']]
+        # MongoDB Client
+        self.mongo_client = MongoDBClient(config_path)
 
     def consume_posts(self):
         print(f"Consuming messages from topic: {self.config['KAFKA']['topic']}")
@@ -31,9 +29,8 @@ class KafkaConsumerClient:
             print(f"Listening for messages...")
             for message in self.consumer:
                 post_data = message.value
-                # Insert received post data into MongoDB
-                self.collection.insert_one(post_data)
-                print(f"Inserted post into MongoDB with CID: {post_data.get('cid')}")
+                # Insert received post data into MongoDB using MongoDBClient
+                self.mongo_client.insert_tweet(post_data)
         except Exception as e:
             print(f"An error occurred while consuming messages: {e}")
 
