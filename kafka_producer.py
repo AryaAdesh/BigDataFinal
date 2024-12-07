@@ -27,9 +27,8 @@ class KafkaProducerClient:
             print(f"Failed to produce post to Kafka: {e}")
 
 
-if __name__ == "__main__":
-    # Initialize Kafka producer client
-    producer_client = KafkaProducerClient()
+def init_bluesky():
+
 
     # Initialize Bluesky client
     config = configparser.ConfigParser()
@@ -38,21 +37,40 @@ if __name__ == "__main__":
     password = config['CREDENTIALS']['password']
     bluesky_client = BlueskyClient(username, password, "movie")
 
-    request_limit = 3000  # Limit as per Bluesky API (3,000 requests per 5 minutes)
-    request_window_duration = 5 * 60  # 5 minutes in seconds
+    # Authenticate Bluesky
+    bluesky_client.authenticate()
+
+    return bluesky_client
+
+
+def generic_kafka_producer(scrape_function, arguments, request_limit = 3000, request_window = 300, **kwargs):
+    """
+
+    :param scrape_function: The function to scrape the bluesky threads
+    :param arguments: The arguments to pass to the function
+    :param request_limit: the rate limit by default it is 3000
+    :param request_window: the rate limit window period; default is 300s
+    :return: None
+    """
+
+    # Initialize Kafka producer client
+    producer_client = KafkaProducerClient()
+
+    # request_limit = 3000  # Limit as per Bluesky API (3,000 requests per 5 minutes)
+    # request_window = 5 * 60  # 5 minutes in seconds
     request_count = 0
     request_window_start = time.time()
 
     while True:
         current_time = time.time()
         # Reset request count if the current window has elapsed
-        if current_time - request_window_start > request_window_duration:
+        if current_time - request_window_start > request_window:
             request_count = 0
             request_window_start = current_time
 
         # Check if request limit has been reached
         if request_count >= request_limit:
-            sleep_time = request_window_duration - (current_time - request_window_start)
+            sleep_time = request_window - (current_time - request_window_start)
             print(f"Request limit reached. Sleeping for {sleep_time} seconds.")
             time.sleep(sleep_time)
             request_count = 0
@@ -60,8 +78,7 @@ if __name__ == "__main__":
 
         try:
             # Authenticate and fetch posts from Bluesky
-            bluesky_client.authenticate()
-            posts = bluesky_client.search_posts(limit=100)
+            posts = scrape_function(**arguments)
             request_count += 1
 
             # Produce each post to Kafka
@@ -92,3 +109,11 @@ if __name__ == "__main__":
             print(f"An error occurred: {e}")
 
         time.sleep(1)  # Short sleep to avoid hitting rate limits too quickly
+
+
+if __name__ == "__main__":
+    blue_sky_client = init_bluesky()
+    generic_kafka_producer(
+        blue_sky_client.search_posts,
+        {"limit": 100, "term": "elections"}
+                           )
