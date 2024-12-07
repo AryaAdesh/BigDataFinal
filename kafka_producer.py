@@ -36,7 +36,7 @@ if __name__ == "__main__":
     config.read('config.ini')
     username = config['CREDENTIALS']['username']
     password = config['CREDENTIALS']['password']
-    bluesky_client = BlueskyClient(username, password, "movie")
+    bluesky_client = BlueskyClient(username, password, "a")
 
     request_limit = 3000  # Limit as per Bluesky API (3,000 requests per 5 minutes)
     request_window_duration = 5 * 60  # 5 minutes in seconds

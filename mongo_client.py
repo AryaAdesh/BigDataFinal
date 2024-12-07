@@ -23,4 +23,43 @@ class MongoDBClient:
             upsert=True
         )
         print(f"Upserted tweet with cid: {tweet['cid']}")
-        print(f"Inserted tweet with cid: {tweet['cid']}")
+
+    def sync_historical_data(self, es_client):
+        """
+        Sync historical data from MongoDB to Elasticsearch.
+        """
+        try:
+            print("Syncing historical data to Elasticsearch...")
+            cursor = self.collection.find({})  # Fetch all documents from MongoDB
+
+            for document in cursor:
+                # Send to Elasticsearch
+                es_client.upsert_elasticsearch(document)
+
+            print("Historical data sync completed.")
+
+        except Exception as e:
+            print(f"Error syncing historical data: {e}")
+
+    def watch_for_changes(self, es_client):
+        """
+        Watch for real-time changes in MongoDB and sync with Elasticsearch.
+        """
+        try:
+            with self.collection.watch() as stream:
+                print("Watching for real-time changes in MongoDB...")
+                for change in stream:
+                    if change["operationType"] in ["insert", "update"]:
+                        # Fetch the full document after insert/update
+                        updated_doc = self.collection.find_one({'_id': change['documentKey']['_id']})
+                        if updated_doc:
+                            # Send the document to Elasticsearch
+                            es_client.upsert_elasticsearch(updated_doc)
+
+                    elif change["operationType"] == "delete":
+                        # Handle deletion if required
+                        deleted_cid = change['documentKey']['_id']
+                        es_client.delete_document(deleted_cid)
+
+        except pymongo.errors.PyMongoError as e:
+            print(f"Error listening to MongoDB changes: {e}")
