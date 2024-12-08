@@ -35,7 +35,7 @@ def init_bluesky():
     config.read('config.ini')
     username = config['CREDENTIALS']['username']
     password = config['CREDENTIALS']['password']
-    bluesky_client = BlueskyClient(username, password, "movie")
+    bluesky_client = BlueskyClient(username, password, "a")
 
     # Authenticate Bluesky
     bluesky_client.authenticate()
