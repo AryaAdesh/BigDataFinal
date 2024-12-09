@@ -1,7 +1,10 @@
+from time import sleep
+
 import google.generativeai as genai
 
 # Configure the API
-GOOGLE_API_KEY = 'AIzaSyDShtModtneL_-c-UxGECg6e0DYs3Xpen8'
+# GOOGLE_API_KEY = 'AIzaSyDShtModtneL_-c-UxGECg6e0DYs3Xpen8'
+GOOGLE_API_KEY = 'AIzaSyBJyV2BbtYB8KxI9pIvGktUU6MwSfVabvQ'
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # Initialize the model
@@ -45,11 +48,15 @@ def summarize_and_generate_key_phrases(texts):
 # clusters = [c1, c2]
 
 def llm_summarize_clusters(clusters):
-    for texts in clusters:
-        results = summarize_and_generate_key_phrases(texts)
+    for idx, texts in enumerate(clusters):
+        try:
+            results = summarize_and_generate_key_phrases(texts)
 
-        # Print results
-        for i, result in enumerate(results, 1):
-            print(f"\nText {i}:")
-            print(f"Summary: {result['summary']}")
-            print(f"Key Phrases: {result['key_phrases']}")
+            # Print results
+            for result in results:
+                print(f"\nCluster {idx}:")
+                print(f"Summary: {result['summary']}")
+                print(f"Key Phrases: {result['key_phrases']}")
+        except Exception as e:
+            print("Exception occured while summarizing key_phrases", e)
+        sleep(20)

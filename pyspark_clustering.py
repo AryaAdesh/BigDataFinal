@@ -1,12 +1,13 @@
 from elasticsearch import Elasticsearch
 import pandas as pd
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import to_timestamp
+from pyspark.sql.functions import to_timestamp, collect_list, slice
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.clustering import KMeans
 from pyspark.ml.linalg import Vectors
 from pyspark.sql.types import ArrayType, DoubleType, StructType, StructField, StringType
 from datetime import datetime, timedelta
+from trend_summarizer import llm_summarize_clusters
 
 # Step 1: Retrieve Data from Elasticsearch
 def fetch_data_from_elasticsearch():
@@ -14,7 +15,7 @@ def fetch_data_from_elasticsearch():
     index_name = "tweet_vectors"
 
     current_time = datetime.utcnow()
-    last_hour = current_time - timedelta(hours=2)
+    last_hour = current_time - timedelta(hours=10)
     start_time = last_hour.isoformat()
     end_time = current_time.isoformat()
 
@@ -101,6 +102,16 @@ if __name__ == "__main__":
 
             # Show results
             clustered_df.show()
+
+            df_clusters = clustered_df.groupBy("cluster").agg(collect_list("text").alias("texts"))
+            df_top_texts = df_clusters.withColumn("top_100_texts", slice("texts", 1, 100))
+            cluster_texts = df_top_texts.orderBy("cluster").select("top_100_texts").rdd.flatMap(lambda x: x).collect()
+
+            # Print the results
+            # for i, texts in enumerate(cluster_texts):
+            #     print(f"Cluster {i}: {texts}")
+            llm_summarize_clusters(cluster_texts)
+
     finally:
         # Stop the Spark session
         if spark is not None:
