@@ -12,7 +12,8 @@ def summarize_and_generate_key_phrases(texts):
     # Generate summary
     combined_text = "\n".join(texts)
     summary_prompt = f"""
-            Summarize the following text concisely in 3-4 sentences.: 
+            You are an AI machine working for Twitter. You are given the following Twitter threads.
+            Now your job is read all the twitter threads and summarize the thread for a layman user Please make the summary in 3-4 sentences..: 
             
             
             {combined_text}
