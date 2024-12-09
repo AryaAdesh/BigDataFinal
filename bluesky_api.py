@@ -39,6 +39,8 @@ class BlueskyClient:
         }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
+        data = response.json().get("posts", [])
+        print([x['record']['text'] for x in data])
         return response.json().get("posts", [])
 
     def get_followers(self, target_username, limit = 1000):

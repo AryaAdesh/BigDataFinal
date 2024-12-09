@@ -35,7 +35,7 @@ def init_bluesky():
     config.read('config.ini')
     username = config['CREDENTIALS']['username']
     password = config['CREDENTIALS']['password']
-    bluesky_client = BlueskyClient(username, password, "a")
+    bluesky_client = BlueskyClient(username, password)
 
     # Authenticate Bluesky
     bluesky_client.authenticate()
@@ -113,7 +113,4 @@ def generic_kafka_producer(scrape_function, arguments, request_limit = 3000, req
 
 if __name__ == "__main__":
     blue_sky_client = init_bluesky()
-    generic_kafka_producer(
-        blue_sky_client.search_posts,
-        {"limit": 100, "term": "elections"}
-                           )
+    blue_sky_client.search_posts(**{"limit": 100, "term": "Formula1"})

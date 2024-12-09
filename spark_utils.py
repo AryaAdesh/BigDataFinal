@@ -38,6 +38,7 @@ class SparkSession(object):
     def load_df_from_es(self, es_read_conf, vector_field: str, output_col_name: str):
         spark = self.spark_session
         df = spark.read.format("org.elasticsearch.spark.sql").options(**es_read_conf).load()
+        # Filter using the timestamp less than 24 hours.
         assembler = VectorAssembler(inputCols=[vector_field], outputCol=output_col_name)
         vector_df = assembler.transform(df)
         return vector_df
