@@ -1,6 +1,7 @@
 from elasticsearch import Elasticsearch
 import pandas as pd
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import to_timestamp
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.clustering import KMeans
 from pyspark.ml.linalg import Vectors
@@ -51,7 +52,9 @@ def create_pyspark_df(data):
     ])
     broadcast_data = spark.sparkContext.broadcast(data)
     data_with_schema = [(row['vector'], row['text'], row['created_at']) for row in broadcast_data.value]
-    return spark.createDataFrame(data_with_schema, schema)
+    df = spark.createDataFrame(data_with_schema, schema)
+    df = df.withColumn("datetime", to_timestamp("created_at"))
+    return df
 
 # Step 3: Prepare Data for Clustering
 def prepare_features(df):
