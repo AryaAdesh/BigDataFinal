@@ -3,7 +3,7 @@ import configparser
 import google.generativeai as genai
 
 config = configparser.ConfigParser()
-config = config.read('config.ini')
+config.read('config.ini')
 
 # Configure the API
 GOOGLE_API_KEY = config['GOOGLEAPI']['api_key']
